@@ -5,3 +5,5 @@ You can download binaries from [release page](https://github.com/boochow/waves2/
 ## About
 
 Waves2 for logue SDK is a simple wavetable oscillator which plays one of the pre-defined 90 waveforms in the logue SDK wavetables.
+
+Shape parameter increases the number of times the waveform is repeated.
