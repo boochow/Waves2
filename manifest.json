@@ -1,0 +1,16 @@
+{
+    "header" : 
+    {
+        "platform" : "nutekt-digital",
+        "module" : "osc",
+        "api" : "1.1-0",
+        "dev_id" : 0,
+        "prg_id" : 0,
+        "version" : "0.1-0",
+        "name" : "Waves2",
+        "num_param" : 1,
+        "params" : [
+            ["wave",    0, 89, ""]
+          ]
+    }
+}
