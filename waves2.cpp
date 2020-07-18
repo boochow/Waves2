@@ -1,5 +1,5 @@
 /*
- * File: pitch.cpp
+ * File: waves2.cpp
  *
  */
 
