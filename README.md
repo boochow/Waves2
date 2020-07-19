@@ -1,4 +1,4 @@
-# Wave2 Oscillator
+# Waves2 Oscillator
 
 You can download binaries from [the release page](https://github.com/boochow/waves2/releases).
 
