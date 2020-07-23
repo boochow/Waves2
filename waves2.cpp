@@ -102,7 +102,7 @@ void OSC_CYCLE(const user_osc_param_t * const params,
     float lfo_max = 1.0 - s_state.shape;
 
     for (; y != y_e; ) {
-        float width = 1.0 - (s_state.shape + lfo_max * lfoz) * 0.875;
+        float width = 1.0 / powf(2.0, (s_state.shape + lfo_max * lfoz) * 3);
         float sig = my_osc_wave_scanf(wave0, phase, 1.0 / width);
 
         *(y++) = f32_to_q31(sig);
