@@ -10,6 +10,7 @@ typedef struct State {
     float phase;
     const float *wave0;
     float shape;
+    float shapez;
     float shiftshape;
     float lfo;
     float lfoz;
@@ -98,12 +99,16 @@ void OSC_CYCLE(const user_osc_param_t * const params,
     q31_t * __restrict y = (q31_t *) yn;
     const q31_t * y_e = y + frames;
 
+    const float shape = s_state.shape;
+    float shapez = s_state.shapez;
+
     float lfoz = s_state.lfoz;
     const float lfo_inc = (s_state.lfo - lfoz) / frames;
-    float lfo_max = 1.0 - s_state.shape;
+    float lfo_max = 1.0 - shape;
 
     for (; y != y_e; ) {
-        float inv_width = powf(2.0, (s_state.shape + lfo_max * lfoz) * 3);
+        shapez = linintf(0.002f, shapez, shape);
+        float inv_width = powf(2.0, (shapez + lfo_max * lfoz) * 3);
         float sig = my_osc_wave_scanf(wave0, phase, inv_width);
 
         *(y++) = f32_to_q31(sig);
@@ -113,6 +118,7 @@ void OSC_CYCLE(const user_osc_param_t * const params,
         lfoz += lfo_inc;
     }
     s_state.phase = phase;
+    s_state.shapez = shapez;
     s_state.lfoz = lfoz;
 }
 
