@@ -73,9 +73,9 @@ __fast_inline float my_osc_wave_scanf(const float *wave, const float phase, cons
     float sig;
     float p0 = phase * multi;
     if (p0 >= 1.0) {
-        float coeff = fastpow2f(s_state.shiftshape * 7);
+        float coeff = fasterpow2f(s_state.shiftshape * 7);
         sig = osc_wave_scanf(wave, p0 - 1.0);
-        sig *= fastpowf((multi - p0) / (multi - 1), coeff);
+        sig *= fasterpowf((multi - p0) / (multi - 1), coeff);
     } else {
         sig = osc_wave_scanf(wave, p0);
     }
