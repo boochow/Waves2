@@ -24,6 +24,8 @@ enum {
     k_flag_wave0 = 1<<1,
 };
 
+#define FLT_NOT_INITIALIZED M_E
+
 static State s_state;
 
 inline void UpdateWaves(const uint8_t flags) {
@@ -65,6 +67,8 @@ void OSC_INIT(uint32_t platform, uint32_t api)
     s_state.phase = 0.f;
     s_state.wave0 = wavesA[0];
     s_state.shape = 0.f;
+    s_state.shapez = FLT_NOT_INITIALIZED;
+    s_state.lfoz = FLT_NOT_INITIALIZED;
     s_state.shiftshape = 0.f;
     s_state.flags = k_flags_none;
 }
@@ -103,6 +107,10 @@ void OSC_CYCLE(const user_osc_param_t * const params,
     float shapez = s_state.shapez;
 
     float lfoz = s_state.lfoz;
+    if (lfoz == FLT_NOT_INITIALIZED) {
+        lfoz = s_state.lfo;
+    }
+
     const float lfo_inc = (s_state.lfo - lfoz) / frames;
     float lfo_max = 1.0 - shape;
 
@@ -162,6 +170,9 @@ void OSC_PARAM(uint16_t index, uint16_t value)
     
     case k_user_osc_param_shape:
         s_state.shape = valf;
+        if (s_state.shapez == FLT_NOT_INITIALIZED) {
+            s_state.shapez = valf;
+        }
         break;
     
     case k_user_osc_param_shiftshape:
