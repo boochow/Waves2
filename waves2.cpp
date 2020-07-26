@@ -28,37 +28,34 @@ enum {
 
 static State s_state;
 
-inline void UpdateWaves(const uint8_t flags) {
-    if (flags & k_flag_wave0) {
-        static const uint8_t k_a_thr = k_waves_a_cnt;
-        static const uint8_t k_b_thr = k_a_thr + k_waves_b_cnt;
-        static const uint8_t k_c_thr = k_b_thr + k_waves_c_cnt;
-        static const uint8_t k_d_thr = k_c_thr + k_waves_d_cnt;
-        static const uint8_t k_e_thr = k_d_thr + k_waves_e_cnt;
-        static const uint8_t k_f_thr = k_e_thr + k_waves_f_cnt;
-        const float * const * table;
-        uint8_t idx = s_state.w_index;
+inline void update_wave(uint8_t idx) {
+    static const uint8_t k_a_thr = k_waves_a_cnt;
+    static const uint8_t k_b_thr = k_a_thr + k_waves_b_cnt;
+    static const uint8_t k_c_thr = k_b_thr + k_waves_c_cnt;
+    static const uint8_t k_d_thr = k_c_thr + k_waves_d_cnt;
+    static const uint8_t k_e_thr = k_d_thr + k_waves_e_cnt;
+    static const uint8_t k_f_thr = k_e_thr + k_waves_f_cnt;
+    const float * const * table;
       
-        if (idx < k_a_thr) {
-            table = wavesA;
-        } else if (idx < k_b_thr) {
-            table = wavesB;
-            idx -= k_a_thr;
-        } else if (idx < k_c_thr) {
-            table = wavesC;
-            idx -= k_b_thr;
-        } else if (idx < k_d_thr) {
-            table = wavesD;
-            idx -= k_c_thr;
-        } else if (idx < k_e_thr) {
-            table = wavesE;
-            idx -= k_d_thr;
-        } else { // if (idx < k_f_thr) {
-            table = wavesF;
-            idx -= k_e_thr;
-        }
-        s_state.wave0 = table[idx];
+    if (idx < k_a_thr) {
+        table = wavesA;
+    } else if (idx < k_b_thr) {
+        table = wavesB;
+        idx -= k_a_thr;
+    } else if (idx < k_c_thr) {
+        table = wavesC;
+        idx -= k_b_thr;
+    } else if (idx < k_d_thr) {
+        table = wavesD;
+        idx -= k_c_thr;
+    } else if (idx < k_e_thr) {
+        table = wavesE;
+        idx -= k_d_thr;
+    } else { // if (idx < k_f_thr) {
+        table = wavesF;
+        idx -= k_e_thr;
     }
+    s_state.wave0 = table[idx];
 }
 
 void OSC_INIT(uint32_t platform, uint32_t api)
@@ -93,7 +90,9 @@ void OSC_CYCLE(const user_osc_param_t * const params,
 {
     const uint8_t flags = s_state.flags;
     s_state.flags = k_flags_none;
-    UpdateWaves(flags);
+    if (flags & k_flag_wave0) {
+        update_wave(s_state.w_index);
+    }
 
     s_state.lfo = q31_to_f32(params->shape_lfo);
 
