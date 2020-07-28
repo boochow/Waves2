@@ -1,13 +1,24 @@
 # Waves2 Oscillator
 
-This is a custom user oscillator for minilogue xd and NTS-1.
+Waves2 is a custom user oscillator for minilogue xd and NTS-1.
+It controls its sound's harmonics in a new way. 
 You can download binaries from [the release page](https://github.com/boochow/waves2/releases).
 
 ## About
 
-Waves2 is the oscillator which can control its harmonics WITHOUT filters.It is a wavetable oscillator that uses pre-defined waveforms in the logue SDK, the same as the pre-installed custom oscillator, "Waves." The main characteristic of this oscillator is that you can shift up harmonics' frequency while keeping its structure. It is done by shortening the time of playing a single waveform while keeping the interval of the start timing of generating a single waveform. The shorter the single playback term, the higher the frequency of the harmonics. 
+Waves2 is the oscillator which can control its harmonics WITHOUT filters. 
+While Waves2 is a wavetable oscillator that uses pre-defined waveforms in the logue SDK -- the same as the pre-installed custom oscillator "Waves" --  it can produce new harmonics from original waveforms by "shifting up" the harmonics distribution inside waveforms. 
 
-Although it is similar to pulse-width modulation of the pulse wave oscillator, Waves2 plays a single waveform multiple times in one cycle. It makes the sound much brighter than playing the waveform only once.
+## Demo
+
+All of these patches only use Waves2, and the filter is completely open.
+[![top-page](http://img.youtube.com/vi/EVoXINcKjwU/0.jpg)](https://youtu.be/EVoXINcKjwU)
+
+## Harmonics shifter
+
+The main characteristic of this oscillator is that you can shift up harmonics' frequency while keeping its structure. It is done by shortening the time of playing a single waveform while keeping the interval of the start timing of generating a single waveform. The shorter the single playback term, the higher the frequency of the harmonics. 
+
+Although it looks like pulse-width modulation of pulse wave oscillators, Waves2 plays a single waveform multiple times in one cycle. It makes the sound much brighter than playing the waveform only once.
 
 ![Shape](https://raw.githubusercontent.com/boochow/Waves2/images/waves2.gif)
 
