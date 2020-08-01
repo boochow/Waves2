@@ -14,6 +14,7 @@ typedef struct State {
     float shiftshape;
     float lfo;
     float lfoz;
+    float lfo_int;
     uint8_t w_index;
     uint8_t flags;
 } State;
@@ -25,6 +26,7 @@ enum {
 };
 
 #define FLT_NOT_INITIALIZED M_E
+#define INT_NOT_INITIALIZED 0xa5a5
 
 static State s_state;
 
@@ -66,6 +68,7 @@ void OSC_INIT(uint32_t platform, uint32_t api)
     s_state.shape = 0.f;
     s_state.shapez = FLT_NOT_INITIALIZED;
     s_state.lfoz = FLT_NOT_INITIALIZED;
+    s_state.lfo_int = FLT_NOT_INITIALIZED;
     s_state.shiftshape = 0.f;
     s_state.flags = k_flags_none;
 }
@@ -111,7 +114,7 @@ void OSC_CYCLE(const user_osc_param_t * const params,
     }
 
     const float lfo_inc = (s_state.lfo - lfoz) / frames;
-    float lfo_max = 1.0 - shape;
+    float lfo_max = (1.0 - shape) * s_state.lfo_int;
 
     for (; y != y_e; ) {
         shapez = linintf(0.002f, shapez, shape);
@@ -162,6 +165,7 @@ void OSC_PARAM(uint16_t index, uint16_t value)
         break;
     
     case k_user_osc_param_id5:
+        s_state.lfo_int = 1.0 - clip01f(value * 0.01f);
         break;
     
     case k_user_osc_param_id6:
