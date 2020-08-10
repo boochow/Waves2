@@ -14,20 +14,24 @@ typedef struct State {
     float shiftshape;
     float lfo;
     float lfoz;
-    float lfo_att;
-    float lfo_int;
+    uint8_t flags;
+    /* parameter values */
+    uint8_t w_index;
     float mod_int;
-    float ev_int;
-    float amp_int;
-    uint32_t ev_t;
     uint32_t ev_t1;
     uint32_t ev_t2;
+    float lfo_att;
+    float amp_int;
+    /* envelope internal variables */
+    uint32_t ev_t;
     uint32_t ev_t1t2;
     float ev_value;
     float ev_slope1;
     float ev_slope2;
-    uint8_t w_index;
-    uint8_t flags;
+    float mod_init;
+    /* actual intensities */
+    float lfo_int;
+    float ev_int;
 } State;
 
 enum {
@@ -102,10 +106,11 @@ inline void recalc_envelope() {
     s_state.lfo_int = lfo_int;
 
     ev_int *= (1 - s_state.shape);
-    s_state.ev_slope1 =  (s_state.ev_t1 != 0) ? ev_int / s_state.ev_t1 : 0;
-    s_state.ev_slope2 =  (s_state.ev_t2 != 0) ? -ev_int / s_state.ev_t2 : 0;
+    s_state.ev_slope1 =  (s_state.ev_t1 != 0) ? 1. / s_state.ev_t1 : 0;
+    s_state.ev_slope2 =  (s_state.ev_t2 != 0) ? -1. / s_state.ev_t2 : 0;
     s_state.ev_t1t2 = s_state.ev_t1 + s_state.ev_t2;
     s_state.ev_int = ev_int;
+    s_state.mod_init = (ev_int < 0) ? -ev_int : 0;
 }
 
 __fast_inline float my_osc_wave_scanf(const float *wave, const float phase, const float multi)
@@ -157,24 +162,20 @@ void OSC_CYCLE(const user_osc_param_t * const params,
 
     uint32_t ev_t  = (flags & k_flag_reset) ? 0 : s_state.ev_t;
     const float ev_int = s_state.ev_int;
-    float ev_value;
-    if (flags & k_flag_reset) {
-        ev_value = (ev_int > 0) ? 0 : -ev_int;
-    } else {
-        ev_value = s_state.ev_value;
-    }
-    const float rev_ev_int = (ev_int != 0) ? 1 / ev_int : 1;
+    float ev_value = (flags & k_flag_reset) ? 0 : s_state.ev_value;
     const float amp_int = s_state.amp_int;
     const uint32_t ev_t1 = s_state.ev_t1;
     const uint32_t ev_t1t2 = s_state.ev_t1t2;
     const float ev_slope1 = s_state.ev_slope1;
     const float ev_slope2 = s_state.ev_slope2;
+    const float mod_init = s_state.mod_init;
 
     for (; y != y_e; ) {
         shapez = linintf(0.002f, shapez, shape);
-        float inv_width = powf(2.0, (shapez + lfo_max * lfoz + ev_value) * 3);
+        float mod_value = mod_init + ev_int * ev_value;
+        float inv_width = powf(2.0, (shapez + lfo_max * lfoz + mod_value) * 3);
         float sig = my_osc_wave_scanf(wave0, phase, inv_width);
-        sig *= (1 - amp_int + amp_int * ev_value * rev_ev_int);
+        sig *= 1 - amp_int + amp_int * ev_value;
 
         *(y++) = f32_to_q31(sig);
 
@@ -185,11 +186,11 @@ void OSC_CYCLE(const user_osc_param_t * const params,
         if (ev_t < ev_t1) {
             ev_value += ev_slope1;
         } else if (ev_t == ev_t1) {
-            ev_value = (ev_int > 0) ? ev_int : 0;
+            ev_value = 1.;
         } else if (ev_t < ev_t1t2) {
             ev_value += ev_slope2;
         } else {
-            ev_value = (ev_int > 0) ? 0 : -ev_int;
+            ev_value = 0.;
         }
         ev_t++;
     }
