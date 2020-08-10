@@ -8,9 +8,13 @@
         "prg_id" : 0,
         "version" : "0.1-0",
         "name" : "Waves2",
-        "num_param" : 1,
+        "num_param" : 5,
         "params" : [
-            ["wave",    0, 89, ""]
+            ["wave",    0, 89, ""],
+            ["ShapeMod Intensity",    0, 100, "%"],
+            ["Mod Attack",       0, 100, "%"],
+            ["Mod Decay",        0, 100, "%"],
+            ["ShapeLFO Attenuation", 0, 100, "%"]
           ]
     }
 }

@@ -14,7 +14,17 @@ typedef struct State {
     float shiftshape;
     float lfo;
     float lfoz;
+    float lfo_att;
     float lfo_int;
+    float mod_int;
+    float ev_int;
+    uint32_t ev_t;
+    uint32_t ev_t1;
+    uint32_t ev_t2;
+    uint32_t ev_t1t2;
+    float ev_value;
+    float ev_slope1;
+    float ev_slope2;
     uint8_t w_index;
     uint8_t flags;
 } State;
@@ -23,6 +33,7 @@ enum {
     k_flags_none = 0,
     k_flag_reset = 1<<0,
     k_flag_wave0 = 1<<1,
+    k_flag_envelope = 1<<2,
 };
 
 #define FLT_NOT_INITIALIZED M_E
@@ -68,9 +79,31 @@ void OSC_INIT(uint32_t platform, uint32_t api)
     s_state.shape = 0.f;
     s_state.shapez = FLT_NOT_INITIALIZED;
     s_state.lfoz = FLT_NOT_INITIALIZED;
-    s_state.lfo_int = FLT_NOT_INITIALIZED;
+    s_state.lfo_att = FLT_NOT_INITIALIZED;
+    s_state.ev_t1 = 0;
+    s_state.ev_t2 = 0;
     s_state.shiftshape = 0.f;
     s_state.flags = k_flags_none;
+}
+
+inline void recalc_envelope() {
+    float lfo_int = 1.0 - s_state.lfo_att;
+    float ev_int = s_state.mod_int;
+    float sum = lfo_int + ev_int;
+
+    if (sum > 1.0) {
+        lfo_int = lfo_int / sum;
+        ev_int = ev_int / sum;
+    }
+
+    lfo_int *= (1 - s_state.shape);
+    s_state.lfo_int = lfo_int;
+
+    ev_int *= (1 - s_state.shape);
+    s_state.ev_slope1 =  s_state.ev_t1 != 0 ? ev_int / s_state.ev_t1 : 0;
+    s_state.ev_slope2 =  s_state.ev_t2 != 0 ? -ev_int / s_state.ev_t2 : 0;
+    s_state.ev_t1t2 = s_state.ev_t1 + s_state.ev_t2;
+    s_state.ev_int = ev_int;
 }
 
 __fast_inline float my_osc_wave_scanf(const float *wave, const float phase, const float multi)
@@ -113,12 +146,24 @@ void OSC_CYCLE(const user_osc_param_t * const params,
         lfoz = s_state.lfo;
     }
 
+    if (flags & k_flag_envelope) {
+        recalc_envelope();
+    }
+
     const float lfo_inc = (s_state.lfo - lfoz) / frames;
-    float lfo_max = (1.0 - shape) * s_state.lfo_int;
+    const float lfo_max = s_state.lfo_int;
+
+    uint32_t ev_t  = (flags & k_flag_reset) ? 0 : s_state.ev_t;
+    float ev_value = (flags & k_flag_reset) ? 0 : s_state.ev_value;
+    const float ev_int = s_state.ev_int;
+    const uint32_t ev_t1 = s_state.ev_t1;
+    const uint32_t ev_t1t2 = s_state.ev_t1t2;
+    const float ev_slope1 = s_state.ev_slope1;
+    const float ev_slope2 = s_state.ev_slope2;
 
     for (; y != y_e; ) {
         shapez = linintf(0.002f, shapez, shape);
-        float inv_width = powf(2.0, (shapez + lfo_max * lfoz) * 3);
+        float inv_width = powf(2.0, (shapez + lfo_max * lfoz + ev_value) * 3);
         float sig = my_osc_wave_scanf(wave0, phase, inv_width);
 
         *(y++) = f32_to_q31(sig);
@@ -126,10 +171,23 @@ void OSC_CYCLE(const user_osc_param_t * const params,
         phase += w0;
         phase -= (uint32_t)phase;
         lfoz += lfo_inc;
+
+        if (ev_t < ev_t1) {
+            ev_value += ev_slope1;
+        } else if (ev_t == ev_t1) {
+            ev_value = ev_int;
+        } else if (ev_t < ev_t1t2) {
+            ev_value += ev_slope2;
+        } else {
+            ev_value = 0;
+        }
+        ev_t++;
     }
     s_state.phase = phase;
     s_state.shapez = shapez;
     s_state.lfoz = lfoz;
+    s_state.ev_t = ev_t;
+    s_state.ev_value = ev_value;
 }
 
 void OSC_NOTEON(const user_osc_param_t * const params)
@@ -147,6 +205,7 @@ void OSC_PARAM(uint16_t index, uint16_t value)
     const float valf = param_val_to_f32(value);
     switch (index) {
     case k_user_osc_param_id1:
+        /* wave */
         {
             static const uint8_t cnt = k_waves_a_cnt + k_waves_b_cnt \
                 +k_waves_c_cnt +k_waves_d_cnt +k_waves_e_cnt +k_waves_f_cnt;
@@ -156,16 +215,27 @@ void OSC_PARAM(uint16_t index, uint16_t value)
         break;
     
     case k_user_osc_param_id2:
+        /* ShapeMod Intensity */
+        s_state.mod_int = clip01f(value * 0.01f);
+        s_state.flags |= k_flag_envelope;
         break;
     
     case k_user_osc_param_id3:
+        /* Mod Attack */
+        s_state.ev_t1 = (powf(2, 0.01 * value) - 1) * k_samplerate;
+        s_state.flags |= k_flag_envelope;
         break;
     
     case k_user_osc_param_id4:
+        /* Mod Decay */
+        s_state.ev_t2 = (powf(2, 0.01 * value) - 1) * k_samplerate;
+        s_state.flags |= k_flag_envelope;
         break;
     
     case k_user_osc_param_id5:
-        s_state.lfo_int = 1.0 - clip01f(value * 0.01f);
+        /* ShapeLFO Attenuation */
+        s_state.lfo_att = clip01f(value * 0.01f);
+        s_state.flags |= k_flag_envelope;
         break;
     
     case k_user_osc_param_id6:
@@ -176,6 +246,7 @@ void OSC_PARAM(uint16_t index, uint16_t value)
         if (s_state.shapez == FLT_NOT_INITIALIZED) {
             s_state.shapez = valf;
         }
+        s_state.flags |= k_flag_envelope;
         break;
     
     case k_user_osc_param_shiftshape:
@@ -186,4 +257,3 @@ void OSC_PARAM(uint16_t index, uint16_t value)
         break;
   }
 }
-
