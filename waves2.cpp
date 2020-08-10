@@ -89,7 +89,7 @@ void OSC_INIT(uint32_t platform, uint32_t api)
 inline void recalc_envelope() {
     float lfo_int = 1.0 - s_state.lfo_att;
     float ev_int = s_state.mod_int;
-    float sum = lfo_int + ev_int;
+    float sum = lfo_int + fabsf(ev_int);
 
     if (sum > 1.0) {
         lfo_int = lfo_int / sum;
@@ -100,8 +100,8 @@ inline void recalc_envelope() {
     s_state.lfo_int = lfo_int;
 
     ev_int *= (1 - s_state.shape);
-    s_state.ev_slope1 =  s_state.ev_t1 != 0 ? ev_int / s_state.ev_t1 : 0;
-    s_state.ev_slope2 =  s_state.ev_t2 != 0 ? -ev_int / s_state.ev_t2 : 0;
+    s_state.ev_slope1 =  (s_state.ev_t1 != 0) ? ev_int / s_state.ev_t1 : 0;
+    s_state.ev_slope2 =  (s_state.ev_t2 != 0) ? -ev_int / s_state.ev_t2 : 0;
     s_state.ev_t1t2 = s_state.ev_t1 + s_state.ev_t2;
     s_state.ev_int = ev_int;
 }
@@ -154,8 +154,13 @@ void OSC_CYCLE(const user_osc_param_t * const params,
     const float lfo_max = s_state.lfo_int;
 
     uint32_t ev_t  = (flags & k_flag_reset) ? 0 : s_state.ev_t;
-    float ev_value = (flags & k_flag_reset) ? 0 : s_state.ev_value;
     const float ev_int = s_state.ev_int;
+    float ev_value;
+    if (flags & k_flag_reset) {
+        ev_value = (ev_int > 0) ? 0 : -ev_int;
+    } else {
+        ev_value = s_state.ev_value;
+    }
     const uint32_t ev_t1 = s_state.ev_t1;
     const uint32_t ev_t1t2 = s_state.ev_t1t2;
     const float ev_slope1 = s_state.ev_slope1;
@@ -175,11 +180,11 @@ void OSC_CYCLE(const user_osc_param_t * const params,
         if (ev_t < ev_t1) {
             ev_value += ev_slope1;
         } else if (ev_t == ev_t1) {
-            ev_value = ev_int;
+            ev_value = (ev_int > 0) ? ev_int : 0;
         } else if (ev_t < ev_t1t2) {
             ev_value += ev_slope2;
         } else {
-            ev_value = 0;
+            ev_value = (ev_int > 0) ? 0 : -ev_int;
         }
         ev_t++;
     }
@@ -216,7 +221,7 @@ void OSC_PARAM(uint16_t index, uint16_t value)
     
     case k_user_osc_param_id2:
         /* ShapeMod Intensity */
-        s_state.mod_int = clip01f(value * 0.01f);
+        s_state.mod_int = clip1m1f((value - 100) * 0.01f);
         s_state.flags |= k_flag_envelope;
         break;
     
