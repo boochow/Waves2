@@ -18,6 +18,7 @@ typedef struct State {
     float lfo_int;
     float mod_int;
     float ev_int;
+    float amp_int;
     uint32_t ev_t;
     uint32_t ev_t1;
     uint32_t ev_t2;
@@ -37,7 +38,6 @@ enum {
 };
 
 #define FLT_NOT_INITIALIZED M_E
-#define INT_NOT_INITIALIZED 0xa5a5
 
 static State s_state;
 
@@ -80,6 +80,8 @@ void OSC_INIT(uint32_t platform, uint32_t api)
     s_state.shapez = FLT_NOT_INITIALIZED;
     s_state.lfoz = FLT_NOT_INITIALIZED;
     s_state.lfo_att = FLT_NOT_INITIALIZED;
+    s_state.mod_int = 0;
+    s_state.amp_int = 0;
     s_state.ev_t1 = 0;
     s_state.ev_t2 = 0;
     s_state.shiftshape = 0.f;
@@ -161,6 +163,8 @@ void OSC_CYCLE(const user_osc_param_t * const params,
     } else {
         ev_value = s_state.ev_value;
     }
+    const float rev_ev_int = (ev_int != 0) ? 1 / ev_int : 1;
+    const float amp_int = s_state.amp_int;
     const uint32_t ev_t1 = s_state.ev_t1;
     const uint32_t ev_t1t2 = s_state.ev_t1t2;
     const float ev_slope1 = s_state.ev_slope1;
@@ -170,6 +174,7 @@ void OSC_CYCLE(const user_osc_param_t * const params,
         shapez = linintf(0.002f, shapez, shape);
         float inv_width = powf(2.0, (shapez + lfo_max * lfoz + ev_value) * 3);
         float sig = my_osc_wave_scanf(wave0, phase, inv_width);
+        sig *= (1 - amp_int + amp_int * ev_value * rev_ev_int);
 
         *(y++) = f32_to_q31(sig);
 
@@ -244,6 +249,8 @@ void OSC_PARAM(uint16_t index, uint16_t value)
         break;
     
     case k_user_osc_param_id6:
+        /* Envelope to amplitude intensity */
+        s_state.amp_int = clip01f(value * 0.01f);
         break;
     
     case k_user_osc_param_shape:
