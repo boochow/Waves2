@@ -222,13 +222,13 @@ void OSC_PARAM(uint16_t index, uint16_t value)
     
     case k_user_osc_param_id3:
         /* Mod Attack */
-        s_state.ev_t1 = (powf(2, 0.01 * value) - 1) * k_samplerate;
+        s_state.ev_t1 = (powf(9, 0.01 * value) - 1) * k_samplerate;
         s_state.flags |= k_flag_envelope;
         break;
     
     case k_user_osc_param_id4:
         /* Mod Decay */
-        s_state.ev_t2 = (powf(2, 0.01 * value) - 1) * k_samplerate;
+        s_state.ev_t2 = (powf(9, 0.01 * value) - 1) * k_samplerate;
         s_state.flags |= k_flag_envelope;
         break;
     
