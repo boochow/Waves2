@@ -17,7 +17,7 @@ Waves2 alone
 
 Waves2 with VCO1 and VCO2
 
-[![top-page](http://img.youtube.com/vi/EVoXINcKjwU/0.jpg)](https://youtu.be/K07AUfXWxt4)
+[![top-page](http://img.youtube.com/vi/K07AUfXWxt4/0.jpg)](https://youtu.be/K07AUfXWxt4)
 
 ## The Harmonics shifter
 
