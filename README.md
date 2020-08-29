@@ -11,8 +11,11 @@ While Waves2 is a wavetable oscillator that uses pre-defined waveforms in the lo
 
 ## Demo
 
-All of these patches only use Waves2, and the filter is completely open.
+Waves2 alone
 [![top-page](http://img.youtube.com/vi/EVoXINcKjwU/0.jpg)](https://youtu.be/EVoXINcKjwU)
+
+Waves2 with VCO1 and VCO2
+[![top-page](http://img.youtube.com/vi/EVoXINcKjwU/0.jpg)](https://youtu.be/K07AUfXWxt4)
 
 ## The Harmonics shifter
 
