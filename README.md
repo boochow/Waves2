@@ -28,20 +28,20 @@ Some waveforms produce too much amount of harmonics when it comes to Waves2. You
 
 ## Parameters
 
-- The shape parameter increases the number of times the waveform is repeated in one cycle.
+- The shape parameter shortens the actual playing time of a single waveform.
 
 - The shift shape parameter decreases the amplitude of the repeated waves.
 
 - "wave" is to select one from pre-defined 89 waveforms.
 
-- "ShapeMod Intensity" determines how the inner evelope changes the shape parameter.
+- "ShapeMod Intensity" adjusts the intensity of the inner envelope to the shape parameter.
 
-- "Mod Attack" is the time length of the inner envelope's attack.
+- "Mod Attack" is the attack time of the inner envelope.
 
-- "Mod Decay" is the time length of the inner envelope's decay.
+- "Mod Decay" is the decay time of the inner envelope.
 
-- "ShapeLFO Attenuation" decreases the affection of the LFO.
+- "ShapeLFO Attenuation" decreases the intensity of the LFO.
 
-- "ModToAmp Intensity" increases the affection of the inner envelope to the amplitude of the sound.
+- "ModToAmp Intensity" increases the intensity of the inner envelope to the amplitude of the sound.
 
 
