@@ -31,6 +31,8 @@ Some waveforms produce too much amount of harmonics when it comes to Waves2. You
 
 ![Shape](https://raw.githubusercontent.com/boochow/Waves2/images/waves2-alt.gif)
 
+[![top-page](http://img.youtube.com/vi/mx8GPk6Qwng/0.jpg)](https://www.youtube.com/watch?v=mx8GPk6Qwng)
+
 ## Parameters
 
 - The shape parameter shortens the actual playing time of a single waveform.
