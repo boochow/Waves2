@@ -39,7 +39,7 @@ Some waveforms produce too much amount of harmonics when it comes to Waves2. You
 
 - The shift shape parameter decreases the amplitude of the repeated waves.
 
-- "wave" is to select one from pre-defined 89 waveforms.
+- "wave" is to select one from pre-defined 90 waveforms.
 
 - "ShapeMod Intensity" adjusts the intensity of the inner envelope to the shape parameter.
 
@@ -51,6 +51,7 @@ Some waveforms produce too much amount of harmonics when it comes to Waves2. You
 
 - "ModToAmp Intensity" increases the intensity of the inner envelope to the amplitude of the sound.
 
+![Shape](https://raw.githubusercontent.com/boochow/Waves2/images/waes2internal.png)
 ## Others
 
 My other user oscillators / modules are [here](https://blog.boochow.com/logue).
