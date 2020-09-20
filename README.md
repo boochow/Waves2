@@ -51,7 +51,7 @@ Some waveforms produce too much amount of harmonics when it comes to Waves2. You
 
 - "ModToAmp Intensity" increases the intensity of the inner envelope to the amplitude of the sound.
 
-![Shape](https://raw.githubusercontent.com/boochow/Waves2/images/waes2internal.png)
+![Shape](https://raw.githubusercontent.com/boochow/Waves2/images/waves2internal.png)
 ## Others
 
 My other user oscillators / modules are [here](https://blog.boochow.com/logue).
