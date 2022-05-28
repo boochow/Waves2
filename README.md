@@ -1,6 +1,6 @@
 # Waves2 Oscillator
 
-Waves2 is a custom user oscillator for minilogue xd and NTS-1.
+Waves2 is a custom user oscillator for Korg prologue, minilogue xd, and NTS-1.
 It controls its sound's harmonics in a new way. 
 You can download binaries from [the release page](https://github.com/boochow/waves2/releases).
 
