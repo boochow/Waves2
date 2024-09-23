@@ -1,130 +1,129 @@
-# #############################################################################
-# Prologue Oscillator Makefile
-# #############################################################################
+##############################################################################
+# Common project definitions
+#
 
-ifeq ($(OS),Windows_NT)
-ifeq ($(MSYSTEM), MSYS)
-    detected_OS := $(shell uname -s)
-else
-    detected_OS := Windows
-endif
-else
-    detected_OS := $(shell uname -s)
-endif
+MKFILE_PATH := $(realpath $(lastword $(MAKEFILE_LIST)))
 
-PLATFORMDIR = ..
-PROJECTDIR = .
-TOOLSDIR = $(PLATFORMDIR)/../../tools
-EXTDIR = $(PLATFORMDIR)/../ext
+# Project root
+PROJECT_ROOT ?= $(dir $(MKFILE_PATH))
 
-CMSISDIR = $(EXTDIR)/CMSIS/CMSIS
+# Common includes
+COMMON_INC_PATH ?= $(realpath $(PROJECT_ROOT)/../common/)
 
-# #############################################################################
-# configure archive utility
-# #############################################################################
+# Common sources
+COMMON_SRC_PATH ?= $(realpath $(PROJECT_ROOT)/../common/)
 
-ZIP = /usr/bin/zip
-ZIP_ARGS = -r -m -q
+# Installation directory
+INSTALLDIR ?= $(PROJECT_ROOT)
 
-ifeq ($(OS),Windows_NT)
-ifneq ($(MSYSTEM), MSYS)
-ifneq ($(MSYSTEM), MINGW64)
-  ZIP = $(TOOLSDIR)/zip/bin/zip
-endif
-endif
-endif
+# Tools directory
+TOOLSDIR ?= $(PROJECT_ROOT)/../../../tools
 
-# #############################################################################
-# Include project specific definition
-# #############################################################################
+# External library directory
+EXTDIR ?= $(PROJECT_ROOT)/../../ext
 
-include ./project.mk
+# CMSIS library location
+CMSISDIR ?= $(EXTDIR)/CMSIS/CMSIS
 
-# #############################################################################
-# configure cross compilation
-# #############################################################################
+# Linker scripts location
+LDDIR ?= $(PROJECT_ROOT)/../ld
 
-MCU = cortex-m4
+##############################################################################
+# Include custom project configuration and sources
+#
 
-GCC_TARGET = arm-none-eabi-
-GCC_BIN_PATH = $(TOOLSDIR)/gcc/gcc-arm-none-eabi-5_4-2016q3/bin
+include config.mk
 
-CC   = $(GCC_BIN_PATH)/$(GCC_TARGET)gcc
-CXXC = $(GCC_BIN_PATH)/$(GCC_TARGET)g++
-LD   = $(GCC_BIN_PATH)/$(GCC_TARGET)gcc
-#LD  = $(GCC_BIN_PATH)/$(GCC_TARGET)g++
-CP   = $(GCC_BIN_PATH)/$(GCC_TARGET)objcopy
-AS   = $(GCC_BIN_PATH)/$(GCC_TARGET)gcc -x assembler-with-cpp
-AR   = $(GCC_BIN_PATH)/$(GCC_TARGET)ar
-OD   = $(GCC_BIN_PATH)/$(GCC_TARGET)objdump
-SZ   = $(GCC_BIN_PATH)/$(GCC_TARGET)size
+##############################################################################
+# Common defaults
+#
 
-HEX  = $(CP) -O ihex
-BIN  = $(CP) -O binary
+# Define project name here
+PROJECT ?= my_unit
 
-LDDIR = $(PROJECTDIR)/ld
-RULESPATH = $(LDDIR)
-LDSCRIPT = $(LDDIR)/userosc.ld
-DLIBS = -lm
+##############################################################################
+# Setup cross compilation
+#
 
-DADEFS = -DSTM32F446xE -DCORTEX_USE_FPU=TRUE -DARM_MATH_CM4
-DDEFS = -DSTM32F446xE -DCORTEX_USE_FPU=TRUE -DARM_MATH_CM4 -D__FPU_PRESENT
+MCU := cortex-m7
 
-COPT = -std=c11 -mstructure-size-boundary=8
-CXXOPT = -std=c++11 -fno-rtti -fno-exceptions -fno-non-call-exceptions
+MCU_MODEL := STM32H725xE
 
-LDOPT = -Xlinker --just-symbols=$(LDDIR)/osc_api.syms
+GCC_TARGET := arm-none-eabi-
+GCC_BIN_PATH ?= $(TOOLSDIR)/gcc/gcc-arm-none-eabi-10.3-2021.10/bin
 
-CWARN = -W -Wall -Wextra
-CXXWARN =
+CC    := $(GCC_BIN_PATH)/$(GCC_TARGET)gcc
+CXXC  := $(GCC_BIN_PATH)/$(GCC_TARGET)g++
+LD    := $(GCC_BIN_PATH)/$(GCC_TARGET)gcc
+#LD   := $(GCC_BIN_PATH)/$(GCC_TARGET)g++
+CP    := $(GCC_BIN_PATH)/$(GCC_TARGET)objcopy
+AS    := $(GCC_BIN_PATH)/$(GCC_TARGET)gcc -x assembler-with-cpp
+AR    := $(GCC_BIN_PATH)/$(GCC_TARGET)ar
+OD    := $(GCC_BIN_PATH)/$(GCC_TARGET)objdump
+SZ    := $(GCC_BIN_PATH)/$(GCC_TARGET)size
+STRIP := $(GCC_BIN_PATH)/$(GCC_TARGET)strip
 
-FPU_OPTS = -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant -fcheck-new
+HEX   := $(CP) -O ihex
+BIN   := $(CP) -O binary
 
-OPT = -g -Os -mlittle-endian
+RULESPATH := $(LDDIR)
+LDSCRIPT := $(LDDIR)/unit.ld
+DLIBS := -lc
+
+DADEFS := -D$(MCU_MODEL) -DCORTEX_USE_FPU=TRUE -DARM_MATH_CM7
+DDEFS := -D$(MCU_MODEL) -DCORTEX_USE_FPU=TRUE -DARM_MATH_CM7 -D__FPU_PRESENT
+
+COPT := -fPIC -std=c11 -fno-exceptions
+CXXOPT := -fPIC -fno-use-cxa-atexit -std=c++11 -fno-rtti -fno-exceptions -fno-non-call-exceptions
+
+LDOPT := -shared --entry=0 -specs=nano.specs -specs=nosys.specs
+
+CWARN := -W -Wall -Wextra
+CXXWARN :=
+
+FPU_OPTS := -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant -fcheck-new
+
+OPT := -g -Os -mlittle-endian 
 OPT += $(FPU_OPTS)
+
+## TODO: there seems to be a bug or some yet unknown behavior that breaks PLT code for external calls when LTO is enabled alongside -nostartfiles
 #OPT += -flto
 
-TOPT = -mthumb -mno-thumb-interwork -DTHUMB_NO_INTERWORKING -DTHUMB_PRESENT
+TOPT := -mthumb -mno-thumb-interwork -DTHUMB_NO_INTERWORKING -DTHUMB_PRESENT
 
+##############################################################################
+# Set compilation targets and directories
+#
 
-# #############################################################################
-# set targets and directories
-# #############################################################################
+PRODUCT := $(PROJECT).nts1mkiiunit
 
-PKGDIR = $(PROJECT)
-PKGARCH = $(PROJECT).ntkdigunit
-MANIFEST = manifest.json
-PAYLOAD = payload.bin
-BUILDDIR = $(PROJECTDIR)/build
-OBJDIR = $(BUILDDIR)/obj
-LSTDIR = $(BUILDDIR)/lst
+BUILDDIR := $(PROJECT_ROOT)/build
+OBJDIR := $(BUILDDIR)/obj
+LSTDIR := $(BUILDDIR)/lst
 
-ASMSRC = $(UASMSRC)
+ASMSRC := $(UASMSRC)
 
-ASMXSRC = $(UASMXSRC)
+ASMXSRC := $(UASMXSRC)
 
-CSRC = $(PROJECTDIR)/tpl/_unit.c $(UCSRC)
+CSRC := $(UCSRC)
+CSRC += $(realpath $(COMMON_SRC_PATH)/_unit_base.c)
 
-CXXSRC = $(UCXXSRC)
+CXXSRC := $(UCXXSRC)
 
 vpath %.s $(sort $(dir $(ASMSRC)))
 vpath %.S $(sort $(dir $(ASMXSRC)))
 vpath %.c $(sort $(dir $(CSRC)))
-vpath %.cpp $(sort $(dir $(CXXSRC)))
+vpath %.cc $(sort $(dir $(CXXSRC)))
 
 ASMOBJS := $(addprefix $(OBJDIR)/, $(notdir $(ASMSRC:.s=.o)))
 ASMXOBJS := $(addprefix $(OBJDIR)/, $(notdir $(ASMXSRC:.S=.o)))
 COBJS := $(addprefix $(OBJDIR)/, $(notdir $(CSRC:.c=.o)))
-CXXOBJS := $(addprefix $(OBJDIR)/, $(notdir $(CXXSRC:.cpp=.o)))
+CXXOBJS := $(addprefix $(OBJDIR)/, $(notdir $(CXXSRC:.cc=.o)))
 
 OBJS := $(ASMXOBJS) $(ASMOBJS) $(COBJS) $(CXXOBJS)
 
-DINCDIR = $(PROJECTDIR)/inc \
-	  $(PROJECTDIR)/inc/api \
-          $(PLATFORMDIR)/inc \
-	  $(PLATFORMDIR)/inc/dsp \
-	  $(PLATFORMDIR)/inc/utils \
-          $(CMSISDIR)/Include
+DINCDIR := $(COMMON_INC_PATH) \
+           $(CMSISDIR)/Include
 
 INCDIR := $(patsubst %,-I%,$(DINCDIR) $(UINCDIR))
 
@@ -135,18 +134,17 @@ LIBS := $(DLIBS) $(ULIBS)
 
 LIBDIR := $(patsubst %,-I%,$(DLIBDIR) $(ULIBDIR))
 
-
-# #############################################################################
-# compiler flags
-# #############################################################################
+##############################################################################
+# Compiler flags
+#
 
 MCFLAGS   := -mcpu=$(MCU)
-ODFLAGS	  = -x --syms
+ODFLAGS	  := -x --syms
 ASFLAGS   = $(MCFLAGS) -g $(TOPT) -Wa,-alms=$(LSTDIR)/$(notdir $(<:.s=.lst)) $(ADEFS)
 ASXFLAGS  = $(MCFLAGS) -g $(TOPT) -Wa,-alms=$(LSTDIR)/$(notdir $(<:.S=.lst)) $(ADEFS)
 CFLAGS    = $(MCFLAGS) $(TOPT) $(OPT) $(COPT) $(CWARN) -Wa,-alms=$(LSTDIR)/$(notdir $(<:.c=.lst)) $(DEFS)
-CXXFLAGS  = $(MCFLAGS) $(TOPT) $(OPT) $(CXXOPT) $(CXXWARN) -Wa,-alms=$(LSTDIR)/$(notdir $(<:.cpp=.lst)) $(DEFS)
-LDFLAGS   = $(MCFLAGS) $(TOPT) $(OPT) -nostartfiles $(LIBDIR) -Wl,-Map=$(BUILDDIR)/$(PROJECT).map,--cref,--no-warn-mismatch,--library-path=$(RULESPATH),--script=$(LDSCRIPT) $(LDOPT)
+CXXFLAGS  = $(MCFLAGS) $(TOPT) $(OPT) $(CXXOPT) $(CXXWARN) -Wa,-alms=$(LSTDIR)/$(notdir $(<:.cc=.lst)) $(DEFS)
+LDFLAGS   := $(MCFLAGS) $(TOPT) $(OPT) -nostartfiles $(LIBDIR) -Wl,-z,max-page-size=128,-Map=$(BUILDDIR)/$(PROJECT).map,--cref,--no-warn-mismatch,--library-path=$(RULESPATH),--script=$(LDSCRIPT) $(LDOPT)
 
 OUTFILES := $(BUILDDIR)/$(PROJECT).elf \
 	    $(BUILDDIR)/$(PROJECT).hex \
@@ -154,15 +152,17 @@ OUTFILES := $(BUILDDIR)/$(PROJECT).elf \
 	    $(BUILDDIR)/$(PROJECT).dmp \
 	    $(BUILDDIR)/$(PROJECT).list
 
-###############################################################################
-# targets
-###############################################################################
+##############################################################################
+# Targets
+#
 
 all: PRE_ALL $(OBJS) $(OUTFILES) POST_ALL
+	@echo Done
+	@echo
 
 PRE_ALL:
 
-POST_ALL: package
+POST_ALL:
 
 $(OBJS): | $(BUILDDIR) $(OBJDIR) $(LSTDIR)
 
@@ -190,12 +190,13 @@ $(COBJS) : $(OBJDIR)/%.o : %.c Makefile
 	@echo Compiling $(<F)
 	@$(CC) -c $(CFLAGS) -I. $(INCDIR) $< -o $@
 
-$(CXXOBJS) : $(OBJDIR)/%.o : %.cpp Makefile
+$(CXXOBJS) : $(OBJDIR)/%.o : %.cc Makefile
 	@echo Compiling $(<F)
 	@$(CXXC) -c $(CXXFLAGS) -I. $(INCDIR) $< -o $@
 
 $(BUILDDIR)/%.elf: $(OBJS) $(LDSCRIPT)
 	@echo Linking $@
+	@echo $(LD) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
 	@$(LD) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
 
 %.hex: %.elf
@@ -219,16 +220,18 @@ $(BUILDDIR)/%.elf: $(OBJS) $(LDSCRIPT)
 
 clean:
 	@echo Cleaning
-	-rm -fR .dep $(BUILDDIR) $(PKGARCH)
-	@echo
+	-rm -fR $(PROJECT_ROOT)/.dep $(BUILDDIR) $(PROJECT_ROOT)/$(PRODUCT)
 	@echo Done
+	@echo
 
-package:
-	@echo Packaging to ./$(PKGARCH)
-	@mkdir -p $(PKGDIR)
-	@cp -a $(MANIFEST) $(PKGDIR)/
-	@cp -a $(BUILDDIR)/$(PROJECT).bin $(PKGDIR)/$(PAYLOAD)
-	@$(ZIP) $(ZIP_ARGS) $(PROJECT).zip $(PKGDIR)
-	@mv $(PROJECT).zip $(PKGARCH)
-	@echo
+$(BUILDDIR)/$(PRODUCT): | $(OBJS) $(OUTFILES)
+	@echo Making $(BUILDDIR)/$(PRODUCT)
+	@cp -a $(BUILDDIR)/$(PROJECT).elf $(BUILDDIR)/$(PRODUCT)
+	@$(STRIP) $(BUILDDIR)/$(PRODUCT)
+
+install: $(BUILDDIR)/$(PRODUCT)
+	@echo Deploying to $(INSTALLDIR)/$(PRODUCT)
+	@mv $(BUILDDIR)/$(PRODUCT) $(INSTALLDIR)/$(PRODUCT)
 	@echo Done
+	@echo
+
